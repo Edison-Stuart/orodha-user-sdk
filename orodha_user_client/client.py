@@ -5,9 +5,12 @@ of other Orodha services.
 """
 import os
 import requests
-from orodha_user_client.exceptions import UrlNotFound
+from http import HTTPStatus
+from orodha_user_client.exceptions import UrlNotFound, RequestError
 from orohda_keycloak import OrodhaCredentials, OrodhakeycloakClient
 
+
+BULK_USER_URL = "get-bulk-users"
 
 class OrodhaUserClient:
     """
@@ -17,13 +20,41 @@ class OrodhaUserClient:
     def __init__(self, credentials: OrodhaCredentials):
         self.credentials = credentials
         self.keycloak_client = OrodhakeycloakClient(credentials_object=self.credentials)
-        self._set_base_url()
+        self.base_url = self._get_base_url()
 
-    def _set_base_url(self):
+    def _get_base_url(self):
+        base_url = os.environ.get("ORODHA_USER_SERVICE_BASE_URL")
+        if not base_url:
+            raise UrlNotFound(
+                message="\"ORODHA_USER_SERVICE_BASE_URL\" must be present in environment"
+            )
+        return base_url.rstrip("/")
+
+
+    def _make_raw_request(
+            self,
+            route: str,
+            request_type: str,
+            **request_args):
+        desired_request = getattr(requests, request_type.lower())
+
+        response = desired_request(
+            f"{self.base_url}/{route.lower()}",
+            headers=request_args.get("headers"),
+            body=request_args.get("body")
+        )
+
+        if response.status_code is not HTTPStatus.OK:
+            raise RequestError(
+                message="A problem was encountered during execution.",
+                status_code=response.status_code
+            )
         try:
-            self.base_url = os.environ["BASE_USER_URL"]
-        except KeyError:
-            raise UrlNotFound(message="\"BASE_USER_URL\" must be present in environment")
+            return_value = response.json()
+        except ValueError:
+            return_value = response.content
+        return return_value
+
 
     def bulk_get(self, request_args: dict):
         """
@@ -33,12 +64,16 @@ class OrodhaUserClient:
         Args:
             request_args(dict): A dictionary of request arguments to be packaged and sent
                 to the Orodha user service.
+
+        Returns:
+            response(dict): A dictionary containing our new token info.
         """
         target_user = request_args.get("target_user")
         if not target_user:
             target_user = self.credentials.client_id
 
         token_data = self.keycloak_client.exchange_token(target_user=target_user)
+
         body = {
             "pageSize": request_args.get("pageSize"),
             "pageNum": request_args.get("pageNum"),
@@ -46,8 +81,13 @@ class OrodhaUserClient:
         }
         headers = {
             "Content-Type": "application/json",
-            "Authorization" : f"Bearer {token_data['access_token']}"
+            "Authorization" : f"Bearer {token_data.get('access_token')}"
         }
-        response = requests.post(self.base_url, data=body, headers=headers)
+        return_value = self._make_raw_request(
+            BULK_USER_URL,
+            "post",
+            body=body,
+            headers=headers
+        )
 
-        return response.json
+        return return_value
