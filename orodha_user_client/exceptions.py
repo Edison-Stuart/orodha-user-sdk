@@ -12,6 +12,17 @@ class UrlNotFound(Exception):
         self.message = message
         super().__init__(self.message)
 
+
+class UnexpectedRequestType(Exception):
+    """
+    Exception for when the request type given to the request factory does not
+    match the list of expected requests types, i.e. PUT, POST, GET, DELETE.
+    """
+    def __init__(self, message: str = None):
+        self.message = message
+        super().__init__(self.message)
+
+
 class RequestError(Exception):
     """
     A general exception for when a request to the user service

@@ -3,8 +3,7 @@
 ## Description
 
 The Orodha User SDK is a Software Development Kit used in
-order to interact with the Orodha User Service without having to make
-any direct http requests to the service itself.
+order to interact with the Orodha User Service.
 
 ## Usage
 

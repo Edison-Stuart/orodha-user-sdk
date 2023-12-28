@@ -8,3 +8,5 @@ MOCK_CREDENTIALS = {
     "username": "some_username",
     "password": "some_password",
     }
+
+MOCK_BASE_URL = "http://some_other_url"

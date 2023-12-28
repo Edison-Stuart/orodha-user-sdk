@@ -6,22 +6,50 @@ of other Orodha services.
 import os
 from http import HTTPStatus
 import requests
-from orodha_user_client.exceptions import UrlNotFound, RequestError
+from orodha_user_client.exceptions import (
+    UrlNotFound,
+    RequestError,
+    UnexpectedRequestType
+)
 from orohda_keycloak import OrodhaCredentials, OrodhakeycloakClient
 
 
 BULK_USER_URL = "get-bulk-users"
+EXPECTED_REQUEST_TYPES = ["put", "post", "get", "delete"]
+
+def request_factory(request_type: str):
+    """
+    Factory function which accepts a request_type string, and
+    returns the correct method from the requests module.
+
+    Args:
+        request_type(str): The string representation of the type of HTTP request
+            we want to make.
+
+    Raises:
+        SomeError: If the request_type is not PUT, POST, GET, or DELETE.
+
+    Returns:
+        request_method: The method from the requests library that matches the request_type
+            argument.
+    """
+    lower_request_type = request_type.lower()
+    if lower_request_type not in EXPECTED_REQUEST_TYPES:
+        raise UnexpectedRequestType(
+            message=f"{lower_request_type} is not an accepted request type. Please only use {EXPECTED_REQUEST_TYPES}."
+        )
+
+    return getattr(requests, lower_request_type)
 
 class OrodhaUserClient:
     """
     The main class for the orodha_user_client package. Allows services
-    to make requests to the Orodha User Service programmatically without
-    having to make raw API calls.
+    to interact with the Orodha User Service programmatically.
     """
-    def __init__(self, credentials: OrodhaCredentials):
+    def __init__(self, credentials: OrodhaCredentials, base_url: str=None):
         self.credentials = credentials
         self.keycloak_client = OrodhakeycloakClient(credentials_object=self.credentials)
-        self.base_url = self._get_base_url()
+        self.base_url = base_url or self._get_base_url()
 
 
     def bulk_get(self, request_args: dict):
@@ -75,7 +103,7 @@ class OrodhaUserClient:
             route: str,
             request_type: str,
             **request_args):
-        desired_request = getattr(requests, request_type.lower())
+        desired_request = request_factory(request_type)
 
         response = desired_request(
             f"{self.base_url}/{route.lower()}",
