@@ -11,13 +11,13 @@ from orodha_user_client.exceptions import (
     RequestError,
     UnexpectedRequestType
 )
-from orohda_keycloak import OrodhaCredentials, OrodhakeycloakClient
+import orodha_keycloak
 
 
 BULK_USER_URL = "get-bulk-users"
 EXPECTED_REQUEST_TYPES = ["put", "post", "get", "delete"]
 
-def request_factory(request_type: str):
+def _request_factory(request_type: str):
     """
     Factory function which accepts a request_type string, and
     returns the correct method from the requests module.
@@ -46,9 +46,9 @@ class OrodhaUserClient:
     The main class for the orodha_user_client package. Allows services
     to interact with the Orodha User Service programmatically.
     """
-    def __init__(self, credentials: OrodhaCredentials, base_url: str=None):
+    def __init__(self, credentials: orodha_keycloak.OrodhaCredentials, base_url: str=None):
         self.credentials = credentials
-        self.keycloak_client = OrodhakeycloakClient(credentials_object=self.credentials)
+        self.keycloak_client = orodha_keycloak.OrodhaKeycloakClient(credentials_object=self.credentials)
         self.base_url = base_url or self._get_base_url()
 
 
@@ -103,15 +103,15 @@ class OrodhaUserClient:
             route: str,
             request_type: str,
             **request_args):
-        desired_request = request_factory(request_type)
+        desired_request = _request_factory(request_type)
 
         response = desired_request(
             f"{self.base_url}/{route.lower()}",
             headers=request_args.get("headers"),
-            body=request_args.get("body")
+            data=request_args.get("body")
         )
 
-        if response.status_code is not HTTPStatus.OK:
+        if response.status_code != HTTPStatus.OK:
             raise RequestError(
                 message="A problem was encountered during execution.",
                 status_code=response.status_code

@@ -16,7 +16,7 @@ jobs:
             - name: Get pytest and other requirements
               run: |
                   sudo apt-get install python3
-                  pip install -r $GITHUB_WORKSPACE/requirements.txt
+                  pip install -r $GITHUB_WORKSPACE/test_requirements.txt
                   pip install pytest-cov
 
             - name: Run pytest

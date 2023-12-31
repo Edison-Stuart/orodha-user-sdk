@@ -14,3 +14,9 @@ MOCK_BULK_RESPONSE_ARGS = [{
     "keycloak_id": "some_keycloak_id",
     "username": "some_username",
 }]
+
+MOCK_TOKEN_EXCHANGE_RESPONSE = {
+   "access_token" : "some_token_value",
+   "refresh_token" : None,
+   "expires_in" : "some_timestamp"
+ }

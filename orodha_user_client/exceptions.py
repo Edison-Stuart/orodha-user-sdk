@@ -34,4 +34,4 @@ class RequestError(Exception):
         status_code: HTTPStatus=HTTPStatus.BAD_REQUEST):
         self.message = message
         self.status_code = status_code
-        super().__init__(self.message)
+        super().__init__(f"{self.message}: {self.status_code}")
