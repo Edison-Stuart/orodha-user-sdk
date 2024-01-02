@@ -20,7 +20,7 @@ jobs:
                   pip install pytest-cov
 
             - name: Run pytest
-              run: pytest --cov $GITHUB_WORKSPACE --cov-report xml:$GITHUB_WORKSPACE/coverage.xml
+              run: pytest --cov $GITHUB_WORKSPACE/tests --cov-report xml:$GITHUB_WORKSPACE/coverage.xml
 
             - name: Get Cover
               uses: orgoro/coverage@v3
