@@ -18,7 +18,7 @@ jobs:
 
             - name: Build Package
               run: |
-                  apt-get install python3
+                  sudo apt-get install python3
                   python3 -m pip install --upgrade build
                   python3 -m build $GITHUB_WORKSPACE
 
