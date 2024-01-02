@@ -15,7 +15,6 @@ import orodha_keycloak
 
 
 BULK_USER_URL = "get-bulk-users"
-EXPECTED_REQUEST_TYPES = ["put", "post", "get", "delete"]
 
 def _request_factory(request_type: str):
     """
@@ -33,23 +32,22 @@ def _request_factory(request_type: str):
         request_method: The method from the requests library that matches the request_type
             argument.
     """
-    lower_request_type = request_type.lower()
-    if lower_request_type not in EXPECTED_REQUEST_TYPES:
+    if not hasattr(requests, request_type.lower()):
         raise UnexpectedRequestType(
-            message=f"{lower_request_type} is not an accepted request type. Please only use {EXPECTED_REQUEST_TYPES}."
+            message=f"{request_type.lower()} is not an accepted request type."
         )
 
-    return getattr(requests, lower_request_type)
+    return getattr(requests, request_type.lower())
 
 class OrodhaUserClient:
     """
     The main class for the orodha_user_client package. Allows services
     to interact with the Orodha User Service programmatically.
     """
-    def __init__(self, credentials: orodha_keycloak.OrodhaCredentials, base_url: str=None):
+    def __init__(self, credentials: orodha_keycloak.OrodhaCredentials):
         self.credentials = credentials
         self.keycloak_client = orodha_keycloak.OrodhaKeycloakClient(credentials_object=self.credentials)
-        self.base_url = base_url or self._get_base_url()
+        self.base_url = self._get_base_url()
 
 
     def bulk_get(self, request_args: dict):
@@ -102,7 +100,8 @@ class OrodhaUserClient:
             self,
             route: str,
             request_type: str,
-            **request_args):
+            **request_args
+        ):
         desired_request = _request_factory(request_type)
 
         response = desired_request(
